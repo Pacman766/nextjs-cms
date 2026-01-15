@@ -15,7 +15,9 @@
       "type": "string"
     },
     "slug": {
-      "type": "uid"
+      "type": "uid",
+      "targetField": "title",
+      "required": false
     },
     "content": {
       "type": "blocks"

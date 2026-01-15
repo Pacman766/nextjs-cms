@@ -2,21 +2,17 @@ import Link from 'next/link';
 import { Post } from '@/lib/types';
 
 type Props = {
-  post: Post;
+	post: Post;
 };
 
 export function PostCard({ post }: Props) {
-  const { title, slug, excerpt } = post.attributes;
+	const { title, slug } = post;
 
-  return (
-    <article>
-      <h2>
-        <Link href={`/posts/${slug}`}>
-          {title}
-        </Link>
-      </h2>
-
-      {excerpt && <p>{excerpt}</p>}
-    </article>
-  );
+	return (
+		<article>
+			<h2>
+				<Link href={`/posts/${slug}`}>{title}</Link>
+			</h2>
+		</article>
+	);
 }

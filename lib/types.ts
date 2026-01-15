@@ -1,13 +1,9 @@
 export type Post = {
-	id: number;
-	attributes: {
-		title: string;
-		slug: string;
-		excerpt?: string;
-		content: string;
-		publishedAt: string;
-	};
+  id: number;
+  title: string;
+  slug: string;
 };
+
 
 export type PostResponse = {
 	data: Post[];

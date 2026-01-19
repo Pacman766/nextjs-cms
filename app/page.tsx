@@ -1,16 +1,17 @@
 // app/page.tsx
-import { PostCard } from '@/components/PostCard';
-import { getPosts } from '@/lib/cms';
-import { Post } from '@/lib/types';
+import PostsListPage from './posts/page'; // Убедитесь, что путь верный
 
-export default async function HomePage() {
-	const posts = await getPosts();
-
+export default async function HomePage({
+	searchParams,
+}: {
+	searchParams: Promise<{ page?: string }>;
+}) {
+	const resolvedParams = await searchParams;
+	const key = resolvedParams.page || '1'; // Создаем уникальный ключ для каждой страницы
+	// Просто пробрасываем Promise в ваш компонент списка
 	return (
 		<main>
-			{posts.data.map((post: Post) => (
-				<PostCard key={post.id} post={post} />
-			))}
+			<PostsListPage key={key} searchParams={searchParams} />
 		</main>
 	);
 }

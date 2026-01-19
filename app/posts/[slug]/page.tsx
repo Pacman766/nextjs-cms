@@ -1,36 +1,27 @@
-import { getPostBySlug, getPosts } from '@/lib/cms';
+import styles from '../page.module.css';
+import { getPostBySlug } from '@/lib/cms';
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 import { notFound } from 'next/navigation';
 
 // app/posts/[slug]/page.tsx
-export async function generateStaticParams() {
-	const posts = await getPosts();
-	return posts.data.map((p) => ({ slug: p.slug }));
-}
+// export async function generateStaticParams() {
+// 	const posts = await getPosts();
+// 	return posts.data.map((p) => ({ slug: p.slug }));
+// }
 
-// 1. Добавляем основной компонент страницы
-// Это основной компонент страницы (Default Export)
-export default async function PostPage({ params }: Props) {
-	// В App Router params — это Promise, поэтому разворачиваем его через await
-	// (в Next.js 15 это обязательно)
+export default async function SinglePostPage({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
-
 	const post = await getPostBySlug(slug);
 
-	// Если пост с таким слагом не нашелся в базе — показываем 404
-	if (!post) {
-		notFound();
-	}
+	if (!post) notFound();
 
 	return (
-		<main style={{ maxWidth: '800px', margin: '0 auto', padding: '20px' }}>
-			<article className="prose lg:prose-xl mx-auto">
-				<h1>{post.title}</h1>
-
-				{/* Renderer принимает массив из Strapi и превращает его в теги p, h2, img и т.д. */}
+		<article className={styles.post}>
+			<h1 className={styles.title}>{post.title}</h1>
+			{/* Используем рендерер для контента из PostgreSQL */}
+			<div className={styles.content}>
 				<BlocksRenderer content={post.content} />
-				<p> Slug: {slug}</p>
-			</article>
-		</main>
+			</div>
+		</article>
 	);
 }

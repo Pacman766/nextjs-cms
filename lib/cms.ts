@@ -4,10 +4,14 @@ if (!CMS_URL) {
 	throw new Error('CMS_URL is not defined in environment variables');
 }
 
-export async function getPosts() {
-	const res = await fetch(`${CMS_URL}/api/posts?populate=*`, {
-		next: { revalidate: 60 },
-	});
+export async function getPosts(page: number = 1, pageSize: number = 5) {
+	const res = await fetch(
+		`${CMS_URL}/api/posts?populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
+		{
+			// next: { revalidate: 60 },
+			cache: 'no-store',
+		},
+	);
 
 	if (!res.ok) {
 		throw new Error('Failed to fetch posts');
@@ -18,12 +22,15 @@ export async function getPosts() {
 	return {
 		data: json.data.map((post: any) => ({
 			id: post.id,
-			documentId: post.documentId, // v5 использует это
+			documentId: post.documentId,
 			title: post.title,
 			slug: post.slug,
-			// Передаем массив блоков как есть
 			content: post.content,
+			createdAt: post.createdAt,
+			publishedAt: post.publishedAt,
+			coverUrl: post.cover?.url || null,
 		})),
+		meta: json.meta.pagination,
 	};
 }
 
@@ -50,6 +57,8 @@ export async function getPostBySlug(slug: string) {
 		id: post.id,
 		title: post.title,
 		slug: post.slug,
-		content: post.content, // Здесь полный текст статьи
+		content: post.content,
+		createdAt: post.createdAt,
+		publishedAt: post.publishedAt,
 	};
 }

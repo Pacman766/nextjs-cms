@@ -15,7 +15,7 @@ export default async function PostsListPage({
 	const currentPage = Number(page) || 1;
 	const pageSize = 5;
 
-	const { data: posts, meta } = await getPosts(currentPage, pageSize);
+	const { data, meta } = await getPosts(currentPage, pageSize);
 
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString('ru-RU', {
@@ -29,7 +29,7 @@ export default async function PostsListPage({
 		<div className="container mx-auto">
 			<h1 className="text-2xl font-bold mb-4">Блог</h1>
 			<div className="grid gap-4 ">
-				{posts.map((post: any) => (
+				{data.map((post: any) => (
 					<article className={styles.card} key={post.id}>
 						{post.coverUrl && (
 							<div className="relative w-full h-48 mb-4 overflow-hidden rounded-lg border border-gray-100">

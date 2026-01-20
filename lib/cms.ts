@@ -1,38 +1,43 @@
+import { fetchGraphQL } from "./graphql/fetcher";
+import { POSTS_QUERY } from "./graphql/posts";
+import { Post } from "./types";
+
 const CMS_URL = process.env.CMS_URL;
 
 if (!CMS_URL) {
 	throw new Error('CMS_URL is not defined in environment variables');
 }
 
-export async function getPosts(page: number = 1, pageSize: number = 5) {
-	const res = await fetch(
-		`${CMS_URL}/api/posts?populate=*&pagination[page]=${page}&pagination[pageSize]=${pageSize}`,
-		{
-			// next: { revalidate: 60 },
-			cache: 'no-store',
-		},
-	);
+export async function getPosts(
+  page: number = 1,
+  pageSize: number = 5
+) {
+  const data = await fetchGraphQL<{ posts: any[] }>(
+    POSTS_QUERY,
+    { page, pageSize }
+  );
 
-	if (!res.ok) {
-		throw new Error('Failed to fetch posts');
-	}
+  const posts = data.posts.map((post) => ({
+    documentId: post.documentId,
+    title: post.title,
+    slug: post.slug,
+    content: post.content,
+    createdAt: post.createdAt,
+    publishedAt: post.publishedAt,
+    coverUrl: post.cover?.url ?? null,
+  }));
 
-	const json = await res.json();
-
-	return {
-		data: json.data.map((post: any) => ({
-			id: post.id,
-			documentId: post.documentId,
-			title: post.title,
-			slug: post.slug,
-			content: post.content,
-			createdAt: post.createdAt,
-			publishedAt: post.publishedAt,
-			coverUrl: post.cover?.url || null,
-		})),
-		meta: json.meta.pagination,
-	};
+  return {
+    data: posts,
+    meta: {
+      page,
+      pageSize,
+      hasPrevPage: page > 1,
+      hasNextPage: posts.length === pageSize,
+    },
+  };
 }
+
 
 export async function getPostBySlug(slug: string) {
 	// Мы ищем пост, где поле slug равно значению из URL

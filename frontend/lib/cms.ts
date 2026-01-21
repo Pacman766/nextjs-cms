@@ -1,6 +1,5 @@
 import { fetchGraphQL } from "./graphql/fetcher";
 import { POSTS_QUERY } from "./graphql/posts";
-import { Post } from "./types";
 
 const CMS_URL = process.env.CMS_URL;
 

@@ -3,12 +3,6 @@ import { getPostBySlug } from '@/lib/cms';
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 import { notFound } from 'next/navigation';
 
-// app/posts/[slug]/page.tsx
-// export async function generateStaticParams() {
-// 	const posts = await getPosts();
-// 	return posts.data.map((p) => ({ slug: p.slug }));
-// }
-
 export default async function SinglePostPage({ params }: { params: Promise<{ slug: string }> }) {
 	const { slug } = await params;
 	const post = await getPostBySlug(slug);

@@ -1,25 +1,28 @@
-'use client';
-
-import { Button } from './ui/button';
 import Link from 'next/link';
+import { Button } from './ui/button';
 
-export function PostNavigation({ page, pageCount }: { page: number; pageCount: number }) {
+type Props = {
+	page: number;
+	hasNextPage: boolean;
+	hasPrevPage: boolean;
+};
+
+export function PostNavigation({ page, hasNextPage, hasPrevPage }: Props) {
 	return (
-		<nav className="flex justify-between mt-10">
-			{page > 1 ? (
-				<Button asChild variant="outline">
+		<div className="flex justify-between mt-10">
+			{hasPrevPage ? (
+				<Button variant="outline">
 					<Link href={`/posts?page=${page - 1}`}>← Назад</Link>
 				</Button>
 			) : (
-				<span className="text-gray-400">← Назад</span>
+				<span />
 			)}
-			{page < pageCount ? (
-				<Button asChild variant="outline">
+
+			{hasNextPage && (
+				<Button variant="outline">
 					<Link href={`/posts?page=${page + 1}`}>Вперёд →</Link>
 				</Button>
-			) : (
-				<span className="text-gray-400">Вперёд →</span>
 			)}
-		</nav>
+		</div>
 	);
 }

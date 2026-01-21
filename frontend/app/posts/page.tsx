@@ -53,7 +53,11 @@ export default async function PostsListPage({
 				))}
 			</div>
 
-			<PostNavigation page={meta.page} pageCount={meta.pageCount} />
+			<PostNavigation
+				page={meta.page}
+				hasNextPage={meta.hasNextPage}
+				hasPrevPage={meta.hasPrevPage}
+			/>
 		</div>
 	);
 }

@@ -1,68 +1,141 @@
-import { fetchGraphQL } from "./graphql/fetcher";
-import { POSTS_QUERY } from "./graphql/posts";
+import { fetchGraphQL } from './graphql/fetcher';
+import {
+  FEATURED_MOVIE_QUERY,
+  MOVIES_QUERY,
+  MOVIE_BY_SLUG_QUERY,
+  GENRES_QUERY,
+  MOVIES_BY_GENRE_QUERY,
+} from './graphql/movies';
+import { getStrapiMedia } from './utils';
+import type { Movie, Genre, PaginationMeta } from './types';
 
-const CMS_URL = process.env.CMS_URL;
+type RawGenre = {
+  documentId: string;
+  name: string;
+  slug: string;
+};
 
-if (!CMS_URL) {
-	throw new Error('CMS_URL is not defined in environment variables');
-}
+type RawMovie = {
+  documentId: string;
+  title: string;
+  slug: string;
+  poster: { url: string } | null;
+  description: string | null;
+  year: number | null;
+  rating: number | null;
+  duration: number | null;
+  featured: boolean;
+  genres: RawGenre[];
+  publishedAt: string | null;
+};
 
-export async function getPosts(
-  page: number = 1,
-  pageSize: number = 5
-) {
-  const data = await fetchGraphQL<{ posts: any[] }>(
-    POSTS_QUERY,
-    { page, pageSize }
-  );
+type RawPageInfo = {
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  total: number;
+};
 
-  const posts = data.posts.map((post) => ({
-    documentId: post.documentId,
-    title: post.title,
-    slug: post.slug,
-    content: post.content,
-    createdAt: post.createdAt,
-    publishedAt: post.publishedAt,
-    coverUrl: post.cover?.url ?? null,
-  }));
+type RawMoviesConnection = {
+  nodes: RawMovie[];
+  pageInfo: RawPageInfo;
+};
 
+function mapMovie(raw: RawMovie): Movie {
   return {
-    data: posts,
-    meta: {
-      page,
-      pageSize,
-      hasPrevPage: page > 1,
-      hasNextPage: posts.length === pageSize,
-    },
+    documentId: raw.documentId,
+    title: raw.title,
+    slug: raw.slug,
+    posterUrl: getStrapiMedia(raw.poster?.url ?? null),
+    description: raw.description,
+    year: raw.year,
+    rating: raw.rating,
+    duration: raw.duration,
+    featured: raw.featured,
+    genres: raw.genres ?? [],
+    publishedAt: raw.publishedAt,
   };
 }
 
+function buildMeta(pageInfo: RawPageInfo): PaginationMeta {
+  return {
+    page: pageInfo.page,
+    pageSize: pageInfo.pageSize,
+    pageCount: pageInfo.pageCount,
+    total: pageInfo.total,
+    hasPrevPage: pageInfo.page > 1,
+    hasNextPage: pageInfo.page < pageInfo.pageCount,
+  };
+}
 
-export async function getPostBySlug(slug: string) {
-	// Мы ищем пост, где поле slug равно значению из URL
-	const res = await fetch(`${CMS_URL}/api/posts?filters[slug][$eq]=${slug}&populate=*`, {
-		next: { revalidate: 60 },
-	});
+export async function getFeaturedMovie(): Promise<Movie | null> {
+  try {
+    const data = await fetchGraphQL<{ movies: RawMovie[] }>(FEATURED_MOVIE_QUERY);
+    const movie = data.movies?.[0];
+    return movie ? mapMovie(movie) : null;
+  } catch {
+    return null;
+  }
+}
 
-	if (!res.ok) {
-		throw new Error(`Failed to fetch post: ${slug}`);
-	}
+export async function getMovies(
+  page: number = 1,
+  pageSize: number = 12
+): Promise<{ data: Movie[]; meta: PaginationMeta }> {
+  try {
+    const data = await fetchGraphQL<{ movies_connection: RawMoviesConnection }>(MOVIES_QUERY, {
+      page,
+      pageSize,
+    });
+    const connection = data.movies_connection;
+    const movies = (connection?.nodes ?? []).map(mapMovie);
+    const pageInfo = connection?.pageInfo ?? { page, pageSize, pageCount: 1, total: movies.length };
+    return { data: movies, meta: buildMeta(pageInfo) };
+  } catch {
+    return {
+      data: [],
+      meta: { page, pageSize, pageCount: 0, total: 0, hasPrevPage: false, hasNextPage: false },
+    };
+  }
+}
 
-	const json = await res.json();
+export async function getMovieBySlug(slug: string): Promise<Movie | null> {
+  try {
+    const data = await fetchGraphQL<{ movies: RawMovie[] }>(MOVIE_BY_SLUG_QUERY, { slug });
+    const movie = data.movies?.[0];
+    return movie ? mapMovie(movie) : null;
+  } catch {
+    return null;
+  }
+}
 
-	// API обычно возвращает массив данных, даже если мы ищем один элемент
-	if (!json.data || json.data.length === 0) {
-		return null;
-	}
+export async function getGenres(): Promise<Genre[]> {
+  try {
+    const data = await fetchGraphQL<{ genres: RawGenre[] }>(GENRES_QUERY);
+    return data.genres ?? [];
+  } catch {
+    return [];
+  }
+}
 
-	const post = json.data[0];
-
-	return {
-		id: post.id,
-		title: post.title,
-		slug: post.slug,
-		content: post.content,
-		createdAt: post.createdAt,
-		publishedAt: post.publishedAt,
-	};
+export async function getMoviesByGenre(
+  genreSlug: string,
+  page: number = 1,
+  pageSize: number = 12
+): Promise<{ data: Movie[]; meta: PaginationMeta }> {
+  try {
+    const data = await fetchGraphQL<{ movies_connection: RawMoviesConnection }>(
+      MOVIES_BY_GENRE_QUERY,
+      { genreSlug, page, pageSize }
+    );
+    const connection = data.movies_connection;
+    const movies = (connection?.nodes ?? []).map(mapMovie);
+    const pageInfo = connection?.pageInfo ?? { page, pageSize, pageCount: 1, total: movies.length };
+    return { data: movies, meta: buildMeta(pageInfo) };
+  } catch {
+    return {
+      data: [],
+      meta: { page, pageSize, pageCount: 0, total: 0, hasPrevPage: false, hasNextPage: false },
+    };
+  }
 }

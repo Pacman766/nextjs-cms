@@ -1,14 +1,28 @@
-export type Post = {
+export type Genre = {
   documentId: string;
-  title: string;
-  slug: string | null;
-  content: any;
-  createdAt: string;
-  publishedAt: string | null;
-  coverUrl: string | null;
+  name: string;
+  slug: string;
 };
 
+export type Movie = {
+  documentId: string;
+  title: string;
+  slug: string;
+  posterUrl: string | null;
+  description: string | null;
+  year: number | null;
+  rating: number | null;
+  duration: number | null;
+  featured: boolean;
+  genres: Genre[];
+  publishedAt: string | null;
+};
 
-export type PostResponse = {
-	data: Post[];
+export type PaginationMeta = {
+  page: number;
+  pageSize: number;
+  pageCount: number;
+  total: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
 };
